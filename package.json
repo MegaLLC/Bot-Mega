@@ -1,0 +1,31 @@
+{
+  "name": "bot-mega",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist",
+    "dev": "ts-node src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MegaLLC/Bot-Mega.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MegaLLC/Bot-Mega/issues"
+  },
+  "homepage": "https://github.com/MegaLLC/Bot-Mega#readme",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^14.14.16",
+    "@types/ws": "^7.4.0",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
+  }
+}
