@@ -1,64 +1,98 @@
-import { GuildMember, VoiceChannel } from "discord.js";
+import { GuildMember } from "discord.js";
 import { CommandoClient, Command, CommandoMessage } from "discord.js-commando";
 import * as _ from "lodash";
 
-module.exports = class InfoCommand extends (
-  Command
-) {
+const API_MAX = 10;
+const DELAY = 80;
+
+export default class InfoCommand extends Command {
+  // manually keep track of api limit
+  apiLimit = API_MAX;
+
   constructor(bot: CommandoClient) {
     super(bot, {
       name: "shake",
       group: "bot",
       memberName: "info",
-      description: "Give a yute a shakedown",
+      description: "Shake a user between channels",
       args: [
         { key: "victim", prompt: "Who would you like to shake?", type: "member" },
         {
           key: "type",
-          prompt: "What type of shaking? (random, linear, binary)",
+          prompt: "What type of shaking? (linear, random, binary)",
           type: "string",
-          default: "randomtype",
+          default: "linear",
         },
       ],
     });
+
+    // manually keep track of api limit
+    setInterval(() => {
+      if (this.apiLimit < API_MAX) this.apiLimit += 1;
+    }, 1000);
   }
 
   async run(msg: CommandoMessage, args) {
     const victim = <GuildMember>args.victim;
-    const type = <string>args.type;
-    const amount = <number>args.amount;
-    const last = victim.voice.channelID;
+    const waitTime = API_MAX - this.apiLimit;
 
-    // if (amount > 20) {
-    //   return await msg.channel.send("That's too much shaking :grimacing:");
-    // }
+    if (!victim.voice.channelID) {
+      return await msg.channel.send("User is not in voice channel");
+    }
 
-    // if (type == "random") {
-    //   let done = false;
-    //   setTimeout(() => (done = true), amount * 1000);
+    if (waitTime) {
+      const p1 = "I am too tired to shake right now.";
+      const p2 = `I will be ready in ${waitTime} second${waitTime == 1 ? "" : "s"}.`;
+      return await msg.channel.send(p1 + "\n" + p2);
+    }
 
-    //   let voiceChannelIDs: string[] = [];
-    //   this.client.guilds.get("587775608659116053")?.channels.forEach((c) => {
-    //     if (c.type == "voice") {
-    //       voiceChannelIDs.push(c.id);
-    //     }
-    //   });
+    if (args.type != "binary" && args.type != "linear" && args.type != "random") {
+      return await msg.channel.send("Invalid type of shaking, it must be `binary`, `linear` or `random`");
+    }
 
-    //   while (!done) {
-    //     await new Promise((r) => setTimeout(r, 500));
-    //     await victim.setVoiceChannel(_.sample(voiceChannelIDs)!);
-    //   }
-    // }
-    await victim.voice.setChannel("727974476016517150");
-    await victim.voice.setChannel("753297221486903316");
-    await victim.voice.setChannel("587775609086804039");
-    await victim.voice.setChannel("731274423080058942");
-    await victim.voice.setChannel("731274483842809924");
-    await victim.voice.setChannel("587777702438895637");
-    await victim.voice.setChannel("587777765202329610");
-    await victim.voice.setChannel("587778273644249109");
-    await victim.voice.setChannel("710373921668595752");
-    await victim.voice.setChannel(last);
-    return msg.channel.send("Okay");
+    const status = await msg.channel.send("Shaking... ");
+
+    const vcFilter = (channel) => channel.type === "voice";
+    const vcSort = (a, b) => a.rawPosition - b.rawPosition;
+    const vcMap = (a) => a.id;
+    const channels = victim.guild.channels.cache.filter(vcFilter).sort(vcSort).map(vcMap);
+    const CIDLen = channels.length;
+    const currentIDIdx = channels.indexOf(victim.voice.channelID);
+
+    // random shake (move to random channel)
+    if (args.type === "random") {
+      let current = currentIDIdx;
+      for (let i = 0; i < API_MAX - 1; i++) {
+        // move user forward some distance at least 1
+        current += _.random(1, CIDLen - 1);
+        current %= CIDLen;
+        await victim.voice.setChannel(channels[current]);
+        await new Promise((r) => setTimeout(r, DELAY));
+      }
+
+      // linear shake (go through channels in order)
+    } else if (args.type === "linear") {
+      let distance = 0;
+      for (let i = (currentIDIdx + 1) % CIDLen; i != currentIDIdx; i = (i + 1) % CIDLen) {
+        await victim.voice.setChannel(channels[i]);
+        await new Promise((r) => setTimeout(r, DELAY));
+        distance++;
+        if (distance >= API_MAX - 1) break;
+      }
+      // binary shake (between 2 channels)
+    } else if (args.type === "binary") {
+      await victim.voice.setChannel(channels[(currentIDIdx + 1) % CIDLen]);
+      for (let i = 0; i < (API_MAX - 2) / 2; i++) {
+        await victim.voice.setChannel(channels[currentIDIdx]);
+        await new Promise((r) => setTimeout(r, DELAY));
+        await victim.voice.setChannel(channels[(currentIDIdx + 1) % CIDLen]);
+        await new Promise((r) => setTimeout(r, DELAY));
+      }
+    }
+
+    // restore user to original channel
+    await victim.voice.setChannel(channels[currentIDIdx]);
+    this.apiLimit -= 10;
+    return status.edit(status.content + " done");
   }
-};
+}
