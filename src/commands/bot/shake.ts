@@ -51,6 +51,7 @@ export default class InfoCommand extends Command {
     }
 
     const status = await msg.channel.send("Shaking... ");
+    this.apiLimit -= 10;
 
     const vcFilter = (channel) => channel.type === "voice";
     const vcSort = (a, b) => a.rawPosition - b.rawPosition;
@@ -92,7 +93,6 @@ export default class InfoCommand extends Command {
 
     // restore user to original channel
     await victim.voice.setChannel(channels[currentIDIdx]);
-    this.apiLimit -= 10;
     return status.edit(status.content + " done");
   }
 }

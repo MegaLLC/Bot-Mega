@@ -4,14 +4,13 @@ import { CommandoClient } from "discord.js-commando";
 import path from "path";
 
 var client: CommandoClient = new CommandoClient({
-  commandPrefix: "`",
+  commandPrefix: "%",
   owner: "319254648722685952",
 });
 client.setMaxListeners(9000);
 
 client.on("ready", async () => {
   console.log(`Logged in as ${client.user!.tag}!`);
-  (<VoiceChannel>await client.channels.fetch("753297221486903316")).join();
 });
 
 client.on("message", async (message) => {
