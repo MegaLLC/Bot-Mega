@@ -1,0 +1,6 @@
+version: '3'
+
+services:
+  node:
+    image: qhyun2/main:botmega
+    env_file: .env
