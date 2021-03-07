@@ -11,11 +11,12 @@ export default class InfoCommand extends Command {
       name: "groupbeg",
       group: "bot",
       memberName: "groupbeg",
+      args: [{ key: "turbo", prompt: "Enable turbo mode?", type: "boolean", default: false }],
       description: "Make everyone perform a quick beg",
     });
   }
 
-  async run(msg: CommandoMessage) {
+  async run(msg: CommandoMessage, { turbo }) {
     let beggers = new Map<GuildMember, GuildChannel>();
 
     msg.guild.channels.cache.forEach((channel) => {
@@ -44,7 +45,7 @@ export default class InfoCommand extends Command {
       await member.voice.setChannel(begChannel).catch();
     }
 
-    await performBeg(this.client, begChannel);
+    await performBeg(this.client, begChannel, turbo);
 
     // move back
     for (const pair of beggers.entries()) {

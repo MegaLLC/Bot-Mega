@@ -12,7 +12,10 @@ export default class InfoCommand extends Command {
       group: "bot",
       memberName: "beg",
       description: "Give someone a quick beg",
-      args: [{ key: "victim", prompt: "Who would you like to beg?", type: "member" }],
+      args: [
+        { key: "victim", prompt: "Who would you like to beg?", type: "member" },
+        { key: "turbo", prompt: "Enable turbo mode?", type: "boolean", default: false },
+      ],
     });
   }
 
